@@ -20,7 +20,8 @@ from handler.logHandler import LogHandler
 from helper.validator import ProxyValidator
 from handler.proxyHandler import ProxyHandler
 from handler.configHandler import ConfigHandler
-
+from ping3 import ping
+import geoip2.database
 
 class DoValidator(object):
     """ 执行校验 """
@@ -36,15 +37,32 @@ class DoValidator(object):
         """
         http_r = cls.httpValidator(proxy)
         https_r = False if not http_r else cls.httpsValidator(proxy)
+        socket_r = cls.socketValidator(proxy)
+
+        ip_address = proxy.proxy.ljust(23)#ping时延
+        head, sep, tail = ip_address.partition(':')
+        response = ping(head)
+        if response is not None:
+            proxy.delay = response
+        else:
+            print(response)
+        reader = geoip2.database.Reader('./GeoLite2-City.mmdb')  # mmdb文件路径
+        response1 = reader.city(head)
+        proxy.region = response1.country.iso_code
 
         proxy.check_count += 1
         proxy.last_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        proxy.last_status = True if http_r else False
         if http_r:
             if proxy.fail_count > 0:
                 proxy.fail_count -= 1
             proxy.https = True if https_r else False
+            proxy.last_status=True
+        elif socket_r:
+            proxy.socket = True
+            proxy.last_status=True
         else:
+            proxy.socket = False
+            proxy.last_status=False
             proxy.fail_count += 1
         return proxy
 
@@ -58,6 +76,13 @@ class DoValidator(object):
     @classmethod
     def httpsValidator(cls, proxy):
         for func in ProxyValidator.https_validator:
+            if not func(proxy.proxy):
+                return False
+        return True
+
+    @classmethod
+    def socketValidator(cls,proxy):
+        for func in ProxyValidator.socket_validator:
             if not func(proxy.proxy):
                 return False
         return True
@@ -116,6 +141,7 @@ class _ThreadChecker(Thread):
                                                                                     proxy.proxy.ljust(23),
                                                                                     proxy.fail_count))
                 self.proxy_handler.delete(proxy)
+                print({11})
             else:
                 self.log.info('UseProxyCheck - {}: {} fail, count {} keep'.format(self.name,
                                                                                   proxy.proxy.ljust(23),

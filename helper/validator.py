@@ -13,10 +13,11 @@
 __author__ = 'JHao'
 
 from re import findall
-from requests import head
+from requests import head,get
 from util.six import withMetaclass
 from util.singleton import Singleton
 from handler.configHandler import ConfigHandler
+
 
 conf = ConfigHandler()
 
@@ -30,6 +31,7 @@ class ProxyValidator(withMetaclass(Singleton)):
     pre_validator = []
     http_validator = []
     https_validator = []
+    socket_validator = []
 
     @classmethod
     def addPreValidator(cls, func):
@@ -44,6 +46,11 @@ class ProxyValidator(withMetaclass(Singleton)):
     @classmethod
     def addHttpsValidator(cls, func):
         cls.https_validator.append(func)
+        return func
+
+    @classmethod
+    def addSocketValidator(cls,func):
+        cls.socket_validator.append(func)
         return func
 
 
@@ -79,8 +86,18 @@ def httpsTimeOutValidator(proxy):
     except Exception as e:
         return False
 
+@ProxyValidator.addSocketValidator
+def socketTimeoutValidator(proxy):
+    """socket检测超时"""
+    proxies = {"http": "socket5://{proxy}".format(proxy=proxy), "https": "socket5://{proxy}".format(proxy=proxy)}
+    try:
+        r = get(conf.httpsUrl, headers=HEADER, proxies=proxies)
+        return True if r.status_code == 200 else False
+    except Exception as e:
+        return False
 
 @ProxyValidator.addHttpValidator
 def customValidatorExample(proxy):
     """自定义validator函数，校验代理是否可用, 返回True/False"""
     return True
+

@@ -77,3 +77,22 @@ class ConfigHandler(withMetaclass(Singleton)):
     def timezone(self):
         return os.getenv("TIMEZONE", setting.TIMEZONE)
 
+    @LazyProperty
+    def database(self):
+        return os.getenv("DATABASE",setting.DATABASE)
+
+    @LazyProperty
+    def sqluser(self):
+        return os.getenv("USER", setting.USER)
+
+    @LazyProperty
+    def sqlpassword(self):
+        return os.getenv("PASSWORD",setting.PASSWORD)
+
+    @LazyProperty
+    def sqlhost(self):
+        return os.getenv("HOST",setting.HOST)
+
+    @LazyProperty
+    def sqlport(self):
+        return os.getenv("PORT",setting.PORT)

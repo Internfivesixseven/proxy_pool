@@ -22,6 +22,7 @@ from flask import Flask, jsonify, request
 from util.six import iteritems
 from helper.proxy import Proxy
 from handler.proxyHandler import ProxyHandler
+from helper.check import DoValidator
 from handler.configHandler import ConfigHandler
 
 app = Flask(__name__)
@@ -93,6 +94,28 @@ def delete():
 def getCount():
     status = proxy_handler.getCount()
     return status
+
+@app.route('/add_proxy1/', methods=['POST'])
+def add_proxy():
+    fetch_source = request.values.get('source')
+    print(fetch_source)
+  #  proxy = request.args.get('proxy')
+    proxy = request.values.get('proxy')
+    print(proxy)
+    if proxy and fetch_source:
+       proxy = DoValidator.validator(Proxy(proxy))
+       proxy.add_source(fetch_source)
+       status = proxy_handler.put(proxy)
+       return jsonify({"status":200,"message":"Added successfully"})
+    else:
+       return jsonify({"status": 201, "message": "Incorrect request parameters"})
+
+@app.route('/checkConnect/', methods=['GET'])
+def checkConnect():
+    proxy = request.args.get('proxy')
+    status = proxy_handler.checkConnect(proxy)
+    return status
+
 
 
 def runFlask():

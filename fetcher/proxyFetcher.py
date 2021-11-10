@@ -16,6 +16,9 @@ import re
 from time import sleep
 
 from util.webRequest import WebRequest
+import requests
+from selenium import webdriver
+from lxml import etree
 
 
 class ProxyFetcher(object):
@@ -231,7 +234,7 @@ class ProxyFetcher(object):
             url = base_url.format(page)
             r = WebRequest().get(url, timeout=10)
             proxies = re.findall(
-                r'<td.*?>[\s\S]*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})[\s\S]*?</td>[\s\S]*?<td.*?>[\s\S]*?(\d+)[\s\S]*?</td>',
+                r'<td.*?>[\s\S]*?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{ )[\s\S]*?</td>',
                 r.text)
             for proxy in proxies:
                 yield ':'.join(proxy)
@@ -249,6 +252,104 @@ class ProxyFetcher(object):
             ips = re.findall(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}", r.text)
             for ip in ips:
                 yield ip.strip()
+
+    @staticmethod
+    def freeProxy15():
+        url = "https://www.proxy-list.download/api/v1/get?type=socks4"
+
+        resp = WebRequest().get(url, timeout=10)
+        proxies = re.findall(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})', resp.text)
+        for proxy in proxies:
+            yield proxy
+
+    @staticmethod
+    def freeProxy16():
+        url = "http://pzzqz.com/"
+
+        resp = WebRequest().get(url, timeout=10)
+        proxies = re.findall(r'<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>[\s\S]*?<td>(\d+)</td>', resp.text)
+        for proxy in proxies:
+            yield ":".join(proxy)
+
+    @staticmethod
+    def freeProxy17():
+        url = "http://spys.me/proxy.txt"
+
+        resp = WebRequest().get(url, timeout=10)
+        proxies = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}', resp.text)
+        for proxy in proxies:
+            yield proxy
+
+    @staticmethod
+    def freeProxy18():
+        url = "http://www.proxylists.net"
+
+        resp = WebRequest().get(url, timeout=10)
+        proxies = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}', resp.text)
+        for proxy in proxies:
+            yield proxy
+
+    @staticmethod
+    def freeProxy19():
+        for j in range(1,3):
+            for i in range(1, 11):
+                urls = [
+                    'http://www.kxdaili.com/dailiip/{}/{}.html'.format(j,i)
+                ]
+                for url in urls:
+                    r = WebRequest().get(url, timeout=10)
+                    proxies = re.findall(r'<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>[\s\S]*?<td>(\d+)</td>',
+                                         r.text)
+                    for proxy in proxies:
+                        yield ":".join(proxy)
+
+    @staticmethod
+    def freeProxy20():
+        for i in range(1, 11):
+            url = 'https://proxy.ip3366.net/free/?action=china&page={}'.format(i)
+            # 发起请求
+            # get方法会返回一个响应对象
+            response = requests.get(url=url)
+            response.encoding = 'utf-8'
+            page_text = response.text
+
+            tree = etree.HTML(page_text)
+            for j in range(1, 11):
+                a = []
+                ip = "//*[@id='content']/section/div[2]/table/tbody/tr[{}]/td[1]/text()".format(j)
+                port = "//*[@id='content']/section/div[2]/table/tbody/tr[{}]/td[2]/text()".format(j)
+                ip_list = tree.xpath(ip)
+                port_list = tree.xpath(port)
+                if ip_list and port_list:
+                    a.append(ip_list[0])
+                    a.append(port_list[0])
+                    yield ":".join(a)
+                else:
+                    continue
+
+    @staticmethod
+    def freeProxy21():
+        option = webdriver.ChromeOptions()
+        option.add_argument('headless')
+        driver = webdriver.Chrome(executable_path=r'/usr/local/lib/python3.7/site-packages/chromedriver.exe',
+                                  options=option)
+        country = {'us': 21, 'au': 1, 'gb': 3, 'ca': 1, 'fr': 4}
+        for coun in country.keys():
+            for i in range(0, country[coun]):
+                url = 'http://www.proxylists.net/{}_{}.html'.format(coun, i)
+                driver.get(url=url)
+                for j in range(3, 13):
+                    a = []
+                    ip = driver.find_element_by_xpath(
+                        '/html/body/font/b/table/tbody/tr[1]/td[2]/table/tbody/tr[{}]/td[1]'.format(j))
+                    port = driver.find_element_by_xpath(
+                        "/html/body/font/b/table/tbody/tr[1]/td[2]/table/tbody/tr[{}]/td[2]".format(j))
+                    a.append(ip.text)
+                    a.append(port.text)
+                    yield ":".join(a)
+                    if i == 20:
+                        break
+        driver.quit()
 
 
 if __name__ == '__main__':

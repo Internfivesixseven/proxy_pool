@@ -47,6 +47,7 @@ class Fetcher(object):
 
             try:
                 for proxy in fetcher():
+
                     self.log.info('ProxyFetch - %s: %s ok' % (fetch_source, proxy.ljust(23)))
                     proxy = proxy.strip()
                     if proxy in proxy_dict:

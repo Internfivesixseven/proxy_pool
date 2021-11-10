@@ -18,7 +18,7 @@ import json
 class Proxy(object):
 
     def __init__(self, proxy, fail_count=0, region="", anonymous="",
-                 source="", check_count=0, last_status="", last_time="", https=False):
+                 source="", check_count=0, last_status="", last_time="", https=False, socket=False,  delay="", username="", password=""):
         self._proxy = proxy
         self._fail_count = fail_count
         self._region = region
@@ -28,6 +28,10 @@ class Proxy(object):
         self._last_status = last_status
         self._last_time = last_time
         self._https = https
+        self._delay = delay
+        self._socket = socket
+        self._username = username
+        self._password = password
 
     @classmethod
     def createFromJson(cls, proxy_json):
@@ -40,7 +44,11 @@ class Proxy(object):
                    check_count=_dict.get("check_count", 0),
                    last_status=_dict.get("last_status", ""),
                    last_time=_dict.get("last_time", ""),
-                   https=_dict.get("https", False)
+                   https=_dict.get("https", False),
+                   socket=_dict.get("socket", False),
+                   delay=_dict.get("delay", ""),
+                   username=_dict.get("username", ""),
+                   password=_dict.get("password", "")
                    )
 
     @property
@@ -89,6 +97,24 @@ class Proxy(object):
         return self._https
 
     @property
+    def socket(self):
+        """是否支持socket5"""
+        return self._socket
+
+    @property
+    def delay(self):
+        """ 延迟字段 """
+        return self._delay
+
+    @property
+    def username(self):
+        return self._username
+
+    @property
+    def password(self):
+        return self._password
+
+    @property
     def to_dict(self):
         """ 属性字典 """
         return {"proxy": self.proxy,
@@ -99,7 +125,11 @@ class Proxy(object):
                 "source": self.source,
                 "check_count": self.check_count,
                 "last_status": self.last_status,
-                "last_time": self.last_time}
+                "last_time": self.last_time,
+                "socket":self.socket,
+                "delay": self.delay,
+                "username":self.username,
+                "password":self.password}
 
     @property
     def to_json(self):
@@ -109,6 +139,10 @@ class Proxy(object):
     @fail_count.setter
     def fail_count(self, value):
         self._fail_count = value
+
+    @region.setter
+    def region(self, value):
+        self._region = value
 
     @check_count.setter
     def check_count(self, value):
@@ -126,6 +160,22 @@ class Proxy(object):
     def https(self, value):
         self._https = value
 
+    @socket.setter
+    def socket(self, value):
+        self._socket = value
+
+    @delay.setter
+    def delay(self, value):
+        self._delay = value
+
+    @username.setter
+    def username(self, value):
+        self._username = value
+
+    @password.setter
+    def password(self, value):
+        self._password = value
+        
     def add_source(self, source_str):
         if source_str:
             self._source.append(source_str)
